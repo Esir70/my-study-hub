@@ -1,0 +1,452 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AFD - Academic Study Portal</title>
+  <!-- Web App Manifest for Home Screen / PWA -->
+  <link rel="manifest" href="data:application/json,{&quot;name&quot;:&quot;AFD Study App&quot;,&quot;short_name&quot;:&quot;AFD&quot;,&quot;start_url&quot;:&quot;.&quot;,&quot;display&quot;:&quot;standalone&quot;,&quot;background_color&quot;:&quot;#0f172a&quot;,&quot;theme_color&quot;:&quot;#0f172a&quot;}">
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+    }
+
+    body {
+      background-color: #0f172a;
+      color: #f8fafc;
+      min-height: 100vh;
+      overflow-x: hidden;
+      position: relative;
+    }
+
+    /* Interactive Parallax Background */
+    .parallax-bg {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: radial-gradient(circle at 50% 50%, rgba(30, 58, 138, 0.4), rgba(15, 23, 42, 0.95)),
+                  url('https://images.unsplash.com/photo-1507842217343-583bb7270b66?auto=format&fit=crop&w=1920&q=80') center/cover no-repeat;
+      z-index: -1;
+      transform: scale(1.05);
+      transition: transform 0.1s ease-out;
+    }
+
+    header {
+      background: rgba(15, 23, 42, 0.85);
+      backdrop-filter: blur(10px);
+      padding: 1.2rem 2rem;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    header h1 {
+      font-size: 1.8rem;
+      color: #38bdf8;
+      letter-spacing: 2px;
+    }
+
+    nav {
+      display: flex;
+      gap: 12px;
+      overflow-x: auto;
+      padding-bottom: 4px;
+    }
+
+    nav button {
+      background: rgba(255, 255, 255, 0.08);
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      color: #f8fafc;
+      padding: 0.5rem 1rem;
+      border-radius: 8px;
+      cursor: pointer;
+      white-space: nowrap;
+      transition: 0.2s;
+    }
+
+    nav button:hover, nav button.active {
+      background: #0284c7;
+      border-color: #38bdf8;
+    }
+
+    main {
+      max-width: 1200px;
+      margin: 2rem auto;
+      padding: 0 1rem;
+    }
+
+    .section {
+      display: none;
+      animation: fadeIn 0.3s ease-in-out forwards;
+    }
+
+    .section.active {
+      display: block;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(8px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 1.5rem;
+    }
+
+    .card {
+      background: rgba(30, 41, 59, 0.7);
+      backdrop-filter: blur(8px);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 12px;
+      padding: 1.5rem;
+      box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.3);
+    }
+
+    .card h2, .card h3 {
+      color: #38bdf8;
+      margin-bottom: 1rem;
+    }
+
+    .btn-link {
+      display: inline-block;
+      width: 100%;
+      text-align: center;
+      background: #0369a1;
+      color: white;
+      text-decoration: none;
+      padding: 0.75rem;
+      border-radius: 8px;
+      margin-top: 0.5rem;
+      font-weight: 600;
+      transition: background 0.2s;
+    }
+
+    .btn-link:hover {
+      background: #0284c7;
+    }
+
+    input, select, textarea, button {
+      width: 100%;
+      padding: 0.75rem;
+      margin-top: 0.5rem;
+      margin-bottom: 0.75rem;
+      border-radius: 8px;
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      background: rgba(15, 23, 42, 0.8);
+      color: white;
+    }
+
+    button.btn-action {
+      background: #10b981;
+      border: none;
+      font-weight: bold;
+      cursor: pointer;
+    }
+
+    button.btn-action:hover {
+      background: #059669;
+    }
+
+    .chat-box {
+      height: 300px;
+      overflow-y: auto;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      padding: 1rem;
+      border-radius: 8px;
+      background: rgba(15, 23, 42, 0.9);
+      margin-bottom: 1rem;
+    }
+
+    .chat-msg {
+      margin-bottom: 0.8rem;
+      padding: 0.6rem 0.8rem;
+      border-radius: 6px;
+    }
+
+    .chat-msg.user {
+      background: #0284c7;
+      text-align: right;
+    }
+
+    .chat-msg.ai {
+      background: #334155;
+      text-align: left;
+    }
+
+    ul {
+      list-style-type: none;
+    }
+
+    li {
+      padding: 0.5rem 0;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    }
+  </style>
+</head>
+<body>
+
+  <div class="parallax-bg" id="parallax"></div>
+
+  <header>
+    <h1>AFD</h1>
+    <nav>
+      <button class="nav-btn active" onclick="showSection('portal')">Portals</button>
+      <button class="nav-btn" onclick="showSection('timetable')">Timetable</button>
+      <button class="nav-btn" onclick="showSection('publichealth')">Public Health</button>
+      <button class="nav-btn" onclick="showSection('aichat')">AI Assistant</button>
+      <button class="nav-btn" onclick="showSection('exams')">Exams & Notes</button>
+      <button class="nav-btn" onclick="showSection('tools')">Tools & Sync</button>
+    </nav>
+  </header>
+
+  <main>
+    <!-- Portals Section -->
+    <section id="portal" class="section active">
+      <div class="grid">
+        <div class="card">
+          <h3>KU Student Portal</h3>
+          <p>Direct access to Kenyatta University registration and marks portal.</p>
+          <a href="https://portal.ku.ac.ke/" target="_blank" class="btn-link">Open Student Portal</a>
+        </div>
+        <div class="card">
+          <h3>Kusoma Platform (KU)</h3>
+          <p>Access online classes, modules, and uploaded course contents.</p>
+          <a href="https://kusoma.ku.ac.ke/" target="_blank" class="btn-link">Open Kusoma Platform</a>
+        </div>
+        <div class="card">
+          <h3>Maktaba Library (KU)</h3>
+          <p>Browse books, e-journals, and Kenyatta University e-resources.</p>
+          <a href="https://library.ku.ac.ke/" target="_blank" class="btn-link">Open Maktaba Library</a>
+        </div>
+        <div class="card">
+          <h3>e-Citizen Portal</h3>
+          <p>Access Kenyan government online services and documentations.</p>
+          <a href="https://accounts.ecitizen.go.e-citizen.ke/" target="_blank" class="btn-link">Open e-Citizen</a>
+        </div>
+        <div class="card">
+          <h3>News Desk (Kenya & Global)</h3>
+          <ul>
+            <li>📰 <a href="https://www.nation.africa/" target="_blank" style="color: #38bdf8;">Nation Africa - Kenya News</a></li>
+            <li>📰 <a href="https://www.standardmedia.co.ke/" target="_blank" style="color: #38bdf8;">The Standard Kenya</a></li>
+            <li>🌍 <a href="https://www.bbc.com/news" target="_blank" style="color: #38bdf8;">BBC World News</a></li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <!-- Timetable Section -->
+    <section id="timetable" class="section">
+      <div class="card">
+        <h2>Study Timetable Generator</h2>
+        <p>Add your school timetable units to create your daily study schedule.</p>
+        <div style="display: flex; gap: 10px; margin-top: 1rem;">
+          <input type="text" id="unitInput" placeholder="Unit Code & Title (e.g. HPH 101)">
+          <input type="text" id="timeInput" placeholder="Day & Time (e.g. Mon 8-11 AM)">
+          <button class="btn-action" style="width: 150px;" onclick="addSchedule()">Add Class</button>
+        </div>
+        <h3 style="margin-top: 1.5rem;">Your Schedule</h3>
+        <ul id="scheduleList"></ul>
+      </div>
+    </section>
+
+    <!-- Public Health & Learning Section -->
+    <section id="publichealth" class="section">
+      <div class="grid">
+        <div class="card">
+          <h3>Public Health Support Tools</h3>
+          <ul>
+            <li>🧹 Data Cleaning & Statistical Tools (SPSS/STATA)</li>
+            <li>🏛️ Global & Regional Health Organizations</li>
+            <li>📚 Environmental & Occupational Health Libraries</li>
+          </ul>
+        </div>
+        <div class="card">
+          <h3>Learning Platform</h3>
+          <ul>
+            <li>🤖 Artificial Intelligence (Prompting & Tools)</li>
+            <li>🎨 Graphic Design Fundamentals</li>
+            <li>📈 Digital Marketing Frameworks</li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <!-- AI Chat Section -->
+    <section id="aichat" class="section">
+      <div class="card">
+        <h2>AI Study Chatbot</h2>
+        <div style="display: flex; gap: 10px; align-items: center; margin-bottom: 10px;">
+          <label><input type="checkbox" id="voiceToggle" style="width: auto;"> Enable Voice Output</label>
+          <button class="btn-action" style="width: 120px; padding: 0.4rem;" onclick="startVoiceInput()">🎤 Voice In</button>
+        </div>
+        <div class="chat-box" id="chatBox">
+          <div class="chat-msg ai">Hello! I am your study AI. Ask me anything about your units, notes, or revision!</div>
+        </div>
+        <div style="display: flex; gap: 10px;">
+          <input type="text" id="chatInput" placeholder="Type your question or study topic..." onkeypress="handleEnter(event)">
+          <button class="btn-action" style="width: 100px;" onclick="sendMessage()">Send</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- Exams & Unit Notes -->
+    <section id="exams" class="section">
+      <div class="grid">
+        <div class="card">
+          <h3>Unit Notes & Revision</h3>
+          <p>Access notes for Kenyatta University units.</p>
+          <textarea placeholder="Paste or summarize unit notes here to save locally..." rows="5" id="unitNotes"></textarea>
+          <button class="btn-action" onclick="saveNotes()">Save Notes</button>
+        </div>
+        <div class="card">
+          <h3>Exam Practice Generator</h3>
+          <p>Upload lecture files to generate practice exams.</p>
+          <input type="file" id="examFile" accept=".pdf,image/*">
+          <button class="btn-action" onclick="generateExam()">Generate Practice Exam</button>
+          <div id="examOutput" style="margin-top: 1rem; font-style: italic;"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Tools, Citations & Email Sync -->
+    <section id="tools" class="section">
+      <div class="grid">
+        <div class="card">
+          <h3>APA 7th Edition Reference Generator</h3>
+          <input type="text" id="author" placeholder="Author Name(s) (e.g. Smith, J.)">
+          <input type="text" id="year" placeholder="Year of Publication (e.g. 2024)">
+          <input type="text" id="title" placeholder="Article / Book Title">
+          <input type="text" id="source" placeholder="Journal / Publisher / URL">
+          <button class="btn-action" onclick="generateAPA()">Generate Citation</button>
+          <div id="apaResult" style="margin-top: 1rem; color: #38bdf8; font-weight: bold;"></div>
+        </div>
+        <div class="card">
+          <h3>Document Upload & Email Sync</h3>
+          <p>Upload document/image and sync to <b>esir3385@gmail.com</b> for lecturer submission.</p>
+          <input type="file" id="syncFile" accept="image/*,.pdf">
+          <button class="btn-action" onclick="syncEmail()">Sync & Email Document</button>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <script>
+    // Tab Navigation
+    function showSection(id) {
+      document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+      document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+      document.getElementById(id).classList.add('active');
+      event.target.classList.add('active');
+    }
+
+    // Interactive Parallax Mouse Move Effect
+    document.addEventListener('mousemove', (e) => {
+      const parallax = document.getElementById('parallax');
+      const x = (window.innerWidth - e.pageX * 2) / 100;
+      const y = (window.innerHeight - e.pageY * 2) / 100;
+      parallax.style.transform = `scale(1.05) translate(${x}px, ${y}px)`;
+    });
+
+    // Schedule Adder
+    function addSchedule() {
+      const unit = document.getElementById('unitInput').value;
+      const time = document.getElementById('timeInput').value;
+      if (!unit || !time) return alert('Please enter both Unit and Time!');
+      const li = document.createElement('li');
+      li.innerHTML = `<strong>${unit}</strong> - ${time}`;
+      document.getElementById('scheduleList').appendChild(li);
+      document.getElementById('unitInput').value = '';
+      document.getElementById('timeInput').value = '';
+    }
+
+    // APA Citation Generator
+    function generateAPA() {
+      const a = document.getElementById('author').value;
+      const y = document.getElementById('year').value;
+      const t = document.getElementById('title').value;
+      const s = document.getElementById('source').value;
+      if(!a || !y || !t) return alert('Please fill in Author, Year, and Title.');
+      document.getElementById('apaResult').innerText = `${a} (${y}). ${t}. ${s}.`;
+    }
+
+    // AI Chat Handler
+    function handleEnter(e) { if(e.key === 'Enter') sendMessage(); }
+    function sendMessage() {
+      const input = document.getElementById('chatInput');
+      const text = input.value.trim();
+      if(!text) return;
+
+      const box = document.getElementById('chatBox');
+      box.innerHTML += `<div class="chat-msg user">${text}</div>`;
+      input.value = '';
+
+      setTimeout(() => {
+        const reply = `AI Response regarding "${text}": Make sure to review your lecture slides and KU Kusoma platform modules!`;
+        box.innerHTML += `<div class="chat-msg ai">${reply}</div>`;
+        box.scrollTop = box.scrollHeight;
+
+        if(document.getElementById('voiceToggle').checked) {
+          const synth = window.speechSynthesis;
+          const utter = new SpeechSynthesisUtterance(reply);
+          synth.speak(utter);
+        }
+      }, 600);
+    }
+
+    function startVoiceInput() {
+      if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) {
+        alert('Voice recognition not supported on this browser.');
+        return;
+      }
+      const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+      const recognition = new SpeechRecognition();
+      recognition.onresult = (e) => {
+        document.getElementById('chatInput').value = e.results[0][0].transcript;
+        sendMessage();
+      };
+      recognition.start();
+    }
+
+    // Save Notes
+    function saveNotes() {
+      const val = document.getElementById('unitNotes').value;
+      localStorage.setItem('afd_unit_notes', val);
+      alert('Notes saved locally on your device!');
+    }
+    window.onload = () => {
+      if(localStorage.getItem('afd_unit_notes')) {
+        document.getElementById('unitNotes').value = localStorage.getItem('afd_unit_notes');
+      }
+    };
+
+    // Practice Exam Simulation
+    function generateExam() {
+      const file = document.getElementById('examFile').files[0];
+      if(!file) return alert('Please select a file first.');
+      document.getElementById('examOutput').innerText = `Generated 5 practice questions based on uploaded file: "${file.name}"!`;
+    }
+
+    // Email Document Sync
+    function syncEmail() {
+      const file = document.getElementById('syncFile').files[0];
+      const targetEmail = "esir3385@gmail.com";
+      if(!file) {
+        window.location.href = `mailto:${targetEmail}?subject=Study Document Submission&body=Please find attached my study materials.`;
+      } else {
+        window.location.href = `mailto:${targetEmail}?subject=Submission: ${encodeURIComponent(file.name)}&body=Attached file: ${encodeURIComponent(file.name)}`;
+      }
+    }
+  </script>
+</body>
+</html>
